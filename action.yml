@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: 'HubOMat'
 description: 'Distribute your Mac app.'
 
@@ -5,10 +6,15 @@ branding:
   icon: 'command'
   color: 'blue'
 
+=======
+name: 'Hello World'
+description: 'Greet someone'
+>>>>>>> 5832217 ('Checkpoint')
 inputs:
   product-path:
     description: "Path to the product to notarize."
     required: true
+<<<<<<< HEAD
 
   appstore-connect-username:
     description: 'The AppStore Connect username.'
@@ -45,3 +51,20 @@ outputs:
 runs:
   using: 'node12'
   main: 'dist/index.js'
+=======
+    default: 'World'
+outputs:
+  random-number:
+    description: "Random number"
+    value: ${{ steps.random-number-generator.outputs.random-id }}
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - id: random-number-generator
+      run: echo "::set-output name=random-id::$(echo $RANDOM)"
+      shell: bash
+    - run: ${{ github.action_path }}/goodbye.sh
+      shell: bash
+>>>>>>> 5832217 ('Checkpoint')
