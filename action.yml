@@ -14,62 +14,63 @@ outputs:
 
 runs:
   using: "composite"
-  steps:
-    - name: "Archive"
-      uses: devbotsxyz/xcode-archive@v1
-      with:
-        scheme: ${{ env.APP_NAME }}
+  -jobs:
+    steps:
+      - name: "Archive"
+        uses: devbotsxyz/xcode-archive@v1
+        with:
+          scheme: ${{ env.APP_NAME }}
 
-    - name: "Import Certificate: Distribution"
-      uses: devbotsxyz/import-signing-certificate@main
-      with:
-        certificate-data: ${{ secrets.DISTRIBUTION_CERTIFICATE_DATA }}
-        certificate-passphrase: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSPHRASE }}
-        keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+      - name: "Import Certificate: Distribution"
+        uses: devbotsxyz/import-signing-certificate@main
+        with:
+          certificate-data: ${{ secrets.DISTRIBUTION_CERTIFICATE_DATA }}
+          certificate-passphrase: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSPHRASE }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
 
-    # seems to be missing the teamID, so export manually below…
-    #- name: "Export & Sign Release Build"
-    #  uses: devbotsxyz/xcode-export-archive@master
-    #  with:
-    #    scheme: ${{ env.APP_NAME }}
+      # seems to be missing the teamID, so export manually below…
+      #- name: "Export & Sign Release Build"
+      #  uses: devbotsxyz/xcode-export-archive@master
+      #  with:
+      #    scheme: ${{ env.APP_NAME }}
 
-    - name: "Create Export Options"
-      run: 
-        echo '<plist version="1.0"><dict><key>method</key><string>developer-id</string><key>teamID</key><string>${{ secrets.TEAM_ID }}</string></dict></plist>' > "${{ env.APP_NAME }}ExportOptions.plist"
+      - name: "Create Export Options"
+        run: 
+          echo '<plist version="1.0"><dict><key>method</key><string>developer-id</string><key>teamID</key><string>${{ secrets.TEAM_ID }}</string></dict></plist>' > "${{ env.APP_NAME }}ExportOptions.plist"
+          
+      - name: "Export & Sign Release Build"
+        run: 
+          xcodebuild -exportArchive -archivePath "${{ env.APP_NAME }}.xcarchive" -exportPath Export -exportOptionsPlist "${{ env.APP_NAME }}ExportOptions.plist"
+
+      # https://developer.apple.com/documentation/xcode/notarizing_macos_software_before_distribution/resolving_common_notarization_issues
+      - name: "Notarize Release Build"
+        uses: devbotsxyz/xcode-notarize@v1
+        with:
+          verbose: true
+          product-path: "Export/${{ env.APP_NAME }}.app"
+          appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
+          appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+
+      - name: "Staple Release Build"
+        uses: devbotsxyz/xcode-staple@v1
+        with:
+          verbose: true
+          product-path: "Export/${{env.APP_NAME }}.app"
+
+      - name: Package for Distribution
+        run: ditto -c -k --keepParent "Export/${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.zip"
+
+      - name: Upload Build Artifact Zip
+        uses: actions/upload-artifact@v2
+        with:
+          name: Build
+          path: ${{ env.APP_NAME }}.zip
         
-    - name: "Export & Sign Release Build"
-      run: 
-        xcodebuild -exportArchive -archivePath "${{ env.APP_NAME }}.xcarchive" -exportPath Export -exportOptionsPlist "${{ env.APP_NAME }}ExportOptions.plist"
-
-    # https://developer.apple.com/documentation/xcode/notarizing_macos_software_before_distribution/resolving_common_notarization_issues
-    - name: "Notarize Release Build"
-      uses: devbotsxyz/xcode-notarize@v1
-      with:
-        verbose: true
-        product-path: "Export/${{ env.APP_NAME }}.app"
-        appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
-        appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
-
-    - name: "Staple Release Build"
-      uses: devbotsxyz/xcode-staple@v1
-      with:
-        verbose: true
-        product-path: "Export/${{env.APP_NAME }}.app"
-
-    - name: Package for Distribution
-      run: ditto -c -k --keepParent "Export/${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.zip"
-
-    - name: Upload Build Artifact Zip
-      uses: actions/upload-artifact@v2
-      with:
-        name: Build
-        path: ${{ env.APP_NAME }}.zip
-      
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/v')
-      with:
-        files: ${{ env.APP_NAME }}.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: ${{ env.APP_NAME }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
