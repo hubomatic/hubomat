@@ -219,7 +219,8 @@ const wait = async ({uuid, username, password, verbose}) => {
                 return false;
         }
 
-        await sleep(45 * 1000);
+        // wait between 45-90 seconds between polls
+        await sleep(((Math.random() * 45) + 45) * 1000);
     }
 
     core.error("Failed to get final notarization status on time.");
