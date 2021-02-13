@@ -170,7 +170,7 @@ const wait = async ({uuid, username, password, verbose}) => {
         args.push("--verbose");
     }
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 60; i++) { // ~1 hour for 60 runs (45-90 seconds each)
         let xcrun = execa("xcrun", args, {reject: false});
 
         if (verbose == true) {
