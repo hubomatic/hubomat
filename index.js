@@ -170,7 +170,7 @@ const wait = async ({uuid, username, password, verbose}) => {
         args.push("--verbose");
     }
 
-    for (let i = 0; i < 60; i++) { // ~1 hour for 60 runs (45-90 seconds each)
+    for (let i = 0; i < 120; i++) { // ~1 hour for 60 runs (45-90 seconds each)
         let xcrun = execa("xcrun", args, {reject: false});
 
         if (verbose == true) {
@@ -258,7 +258,7 @@ const main = async () => {
             return;
         }
 
-        await sleep(15000); // TODO On a busy day, it can take a while before the build can be checked?
+        await sleep(15000); 
 
         const success = await core.group('Waiting for Notarization Status', async () => {
             return await wait({uuid: uuid, archivePath: archivePath, ...configuration})
