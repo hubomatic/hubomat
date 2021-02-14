@@ -39,10 +39,6 @@ inputs:
     description: "Path to the notarized and stapled distribution zip."
     required: true
     
-  artifact-path:
-    description: "Path to the notarized and stapled distribution zip."
-    required: true
-    
   certificate-data:
     description: 'Base64 encoded certificate in P12 format.'
     required: false
