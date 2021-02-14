@@ -18,7 +18,10 @@
     "Actions",
     "Xcode"
   ],
-  "author": ["Marc Prud'hommeaux <marc@glimpse.io>", "Stefan Arentz <stefan@devbots.xyz>"],
+  "author": [
+    "Marc Prud'hommeaux <marc@glimpse.io>",
+    "Stefan Arentz <stefan@devbots.xyz>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hubomatic/hubomat/issues"

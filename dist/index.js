@@ -6,6 +6,7 @@ require('./sourcemap-register.js');module.exports =
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 // MIT License - Copyright (c) 2020 Stefan Arentz <stefan@devbots.xyz>
+// MIT License - Copyright (c) 2021 Marc Prud'hommeaux <marc@glimpse.io>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +45,7 @@ const parseConfiguration = () => {
         username: core.getInput("appstore-connect-username", {required: true}),
         password: core.getInput("appstore-connect-password", {required: true}),
         primaryBundleId: core.getInput("primary-bundle-id"),
+        timeout: core.getInput("timeout") || 60,
         verbose: core.getInput("verbose") === "true",
     };
 
@@ -162,7 +164,7 @@ const submit = async ({productPath, archivePath, primaryBundleId, username, pass
 };
 
 
-const wait = async ({uuid, username, password, verbose}) => {
+const wait = async ({uuid, username, password, verbose, timeout}) => {
     const args = [
         "altool",
         "--output-format", "json",
@@ -176,7 +178,7 @@ const wait = async ({uuid, username, password, verbose}) => {
         args.push("--verbose");
     }
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < timeout; i++) { // 45-90 seconds each check, so it averages to the given timeout minutes
         let xcrun = execa("xcrun", args, {reject: false});
 
         if (verbose == true) {
@@ -225,10 +227,11 @@ const wait = async ({uuid, username, password, verbose}) => {
                 return false;
         }
 
-        await sleep(30000);
+        // wait between 45-90 seconds between polls
+        await sleep(((Math.random() * 45) + 45) * 1000);
     }
 
-    core.error("Failed to get final notarization status on time.");
+    core.error(`Failed to get final notarization status after ${timeout} minutes.`);
 
     return false;
 };
@@ -263,7 +266,7 @@ const main = async () => {
             return;
         }
 
-        await sleep(15000); // TODO On a busy day, it can take a while before the build can be checked?
+        await sleep(15000); 
 
         const success = await core.group('Waiting for Notarization Status', async () => {
             return await wait({uuid: uuid, archivePath: archivePath, ...configuration})
