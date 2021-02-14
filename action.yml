@@ -53,6 +53,11 @@ inputs:
     required: false
     default: false
 
+  timeout:
+    description: "The timeout in minutes for checking validation status."
+    required: false
+    default: 120
+
 outputs:
   product-path:
     description: "Path to the product that was notarized"
