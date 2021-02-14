@@ -38,6 +38,7 @@ const parseConfiguration = () => {
         username: core.getInput("appstore-connect-username", {required: true}),
         password: core.getInput("appstore-connect-password", {required: true}),
         primaryBundleId: core.getInput("primary-bundle-id"),
+        timeout: core.getInput("timeout"),
         verbose: core.getInput("verbose") === "true",
     };
 
@@ -156,7 +157,7 @@ const submit = async ({productPath, archivePath, primaryBundleId, username, pass
 };
 
 
-const wait = async ({uuid, username, password, verbose}) => {
+const wait = async ({uuid, username, password, verbose, timeout}) => {
     const args = [
         "altool",
         "--output-format", "json",
@@ -170,7 +171,7 @@ const wait = async ({uuid, username, password, verbose}) => {
         args.push("--verbose");
     }
 
-    for (let i = 0; i < 120; i++) { // ~1 hour for 60 runs (45-90 seconds each)
+    for (let i = 0; i < timeout; i++) { // 45-90 seconds each check, so it averages to the given timeout minutes
         let xcrun = execa("xcrun", args, {reject: false});
 
         if (verbose == true) {
