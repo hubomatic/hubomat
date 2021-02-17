@@ -1,8 +1,11 @@
 name: Keep the versions up-to-date
 
 on:
-  release:
-    types: [published, edited]
+  push:
+    branches: '*'
+    tags: '*'
+  #release:
+  #  types: [published, edited]
 
 jobs:
   actions-tagger:
