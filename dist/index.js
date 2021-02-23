@@ -251,7 +251,7 @@ const pollstatus = async ({uuid, username, password, verbose, timeout}) => {
 };
 
 const staple = async ({productPath, verbose}) => {
-    const options = [verbose ? "--verbose" : "--quiet"];
+    const options = [verbose === true ? "--verbose" : "--quiet"];
     let {exitCode} = await execa("xcrun", ["stapler", "staple", ...options, productPath], {reject: false});
     if (exitCode != 0) {
         const message = staplerExitCodes[exitCode] || `Unknown exit code ${exitCode}`;
@@ -305,10 +305,13 @@ const main = async () => {
 
         if (configuration.staple === true) {
             await staple({productPath: configuration.productPath, verbose: configuration.verbose});
+            core.info(`Stapeled notarization ticket to ${configuration.productPath}`);
         }
 
         if (configuration.archivePath) {
             await archive({productPath: configuration.productPath, archivePath: configuration.archivePath});
+            core.setOutput('archive-path', configuration.archivePath);
+            core.info(`Archived stapeled app to ${configuration.archivePath}`);
         }
     } catch (error) {
         core.setFailed(`HubOMatic failed with an unexpected error: ${error.message}`);

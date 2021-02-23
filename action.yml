@@ -1,17 +1,18 @@
 name: 'HubOMat'
-description: 'Distribute your Mac app.'
+description: 'Notarize & staple your Mac app.'
 
 branding:
   icon: 'command'
   color: 'blue'
 
   # Example Usage:
-  # - name: "Notarize Release Build"
-  #   uses: hubomatic/hubomat@v0.0.3
+  # - name: "Notarize & Staple"
+  #   uses: hubomatic/hubomat@v0.0.19
   #   with:
   #     verbose: false
   #     timeout: 120 # minutes
   #     product-path: "Export/${{ env.APP_NAME }}.app"
+  #     staple: true
   #     artifact-path: "Export/${{ env.APP_NAME }}.zip"
   #     team-id: ${{ secrets.TEAM_ID }}
   #     keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -30,6 +31,11 @@ inputs:
     description: "The timeout in minutes for checking validation status."
     required: false
     default: 120
+
+  staple:
+    description: "Whether to staple the notatized product."
+    required: false
+    default: true
     
   product-path:
     description: "Path to the product to notarize."
@@ -81,6 +87,8 @@ inputs:
 outputs:
   product-path:
     description: "Path to the product that was notarized"
+  artifact-path:
+    description: "Path to the stapled release artifact"
 
 runs:
   using: 'node12'
