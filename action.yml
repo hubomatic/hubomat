@@ -88,9 +88,12 @@ inputs:
   keychain-name:
     description: 'Keychain name.'
     required: true
+    default: "hubomatic-keychain"
+
   keychain-password:
     description: 'Keychain password (arbitrary).'
     required: true
+    default: "hubomatic-keychain-password"
     
   appstore-connect-username:
     description: 'The AppStore Connect username.'

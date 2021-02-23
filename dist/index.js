@@ -29,7 +29,7 @@ require('./sourcemap-register.js');module.exports =
 // To make a new release, run: npm install && git.tagrelease
 
 const fs = __webpack_require__(5747);
-
+const path = __webpack_require__(5622);
 const core = __webpack_require__(2186);
 const execa = __webpack_require__(5447);
 const plist = __webpack_require__(1933);
@@ -192,6 +192,10 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID}) =>
         "-exportPath", exportPath,
         "-exportOptionsPlist", "exportOptions.plist",
     ];
+
+    if (verbose === true) {
+        args.push("--verbose");
+    }
 
     const xcodebuild = execa('xcodebuild', args);
     xcodebuild.stdout.pipe(process.stdout);

@@ -21,8 +21,8 @@
 
 // To make a new release, run: npm install && git.tagrelease
 
-const fs = require('fs');
-
+const fs = require("fs");
+const path = require('path');
 const core = require('@actions/core');
 const execa = require('execa');
 const plist = require('plist');
@@ -185,6 +185,10 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID}) =>
         "-exportPath", exportPath,
         "-exportOptionsPlist", "exportOptions.plist",
     ];
+
+    if (verbose === true) {
+        args.push("--verbose");
+    }
 
     const xcodebuild = execa('xcodebuild', args);
     xcodebuild.stdout.pipe(process.stdout);
