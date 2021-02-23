@@ -163,7 +163,7 @@ const createZip = async ({productPath, archivePath}) => {
 };
 
 
-const submit = async ({productPath, archivePath, primaryBundleId, username, password, verbose}) => {
+const notarize = async ({productPath, archivePath, primaryBundleId, username, password, verbose}) => {
     //
     // Make sure the product exists.
     //
@@ -367,17 +367,17 @@ const main = async () => {
             throw error;
         }
 
-        const archivePath = await core.group('Preparing for Notarization', async () => {
-            const archivePath = await createZip({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
+        const submitZipPath = await core.group('Preparing for Notarization', async () => {
+            const zipPath = await createZip({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
 
-            if (archivePath !== null) {
-                core.info(`Created application archive at ${archivePath}`);
+            if (zipPath !== null) {
+                core.info(`Created application archive at ${zipPath}`);
             }
-            return archivePath;
+            return zipPath;
         });
 
         const uuid = await core.group('Submitting for Notarization', async () => {
-            let uuid = await submit({archivePath: archivePath, ...configuration});
+            let uuid = await notarize({archivePath: submitZipPath, ...configuration});
             if (uuid !== null) {
                 core.info(`Submitted package for notarization. Request UUID is ${uuid}`);
             }
