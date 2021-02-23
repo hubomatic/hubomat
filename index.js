@@ -166,7 +166,7 @@ const importCertificates = async () => {
     }
 };
 
-const exportArchive = async ({archivePath, exportMethod, exportPath, teamID}) => {
+const exportArchive = async ({archivePath, exportMethod, exportPath, teamID, verbose}) => {
     // Write the exportOptions.plist
 
     const exportOptions = {
@@ -404,7 +404,7 @@ const main = async () => {
 
         try {
             await core.group('Exporting Archive', async () => {
-                await exportArchive({archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath, teamID: configuration.teamID})
+                await exportArchive({ archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath, teamID: configuration.teamID, verbose: configuration.verbose })
             });
         } catch (error) {
             core.error(`Unexpected error during Export Archive: ${error.message}`);
