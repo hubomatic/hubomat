@@ -32,6 +32,7 @@ const fs = __webpack_require__(5747);
 const core = __webpack_require__(2186);
 const execa = __webpack_require__(5447);
 const plist = __webpack_require__(1933);
+const {config} = __webpack_require__(1765);
 
 
 const sleep = (ms) => {
@@ -52,9 +53,13 @@ const staplerExitCodes = {
 const parseConfiguration = () => {
     const configuration = {
         productPath: core.getInput("product-path", {required: true}),
+        artifactPath: core.getInput("artifact-path", {required: false}),
+
         username: core.getInput("appstore-connect-username", {required: true}),
         password: core.getInput("appstore-connect-password", {required: true}),
+
         primaryBundleId: core.getInput("primary-bundle-id"),
+
         timeout: core.getInput("timeout") || 60,
         verbose: core.getInput("verbose") === "true",
         staple: (core.getInput("staple") || "true") === "true",
@@ -68,9 +73,7 @@ const parseConfiguration = () => {
 };
 
 
-const archive = async ({productPath}) => {
-    const archivePath = "/tmp/archive.zip"; // TODO Temporary file
-
+const archive = async ({productPath, archivePath}) => {
     const args = [
         "-c",           // Create an archive at the destination path
         "-k",           // Create a PKZip archive
@@ -261,7 +264,8 @@ const main = async () => {
         const configuration = parseConfiguration();
 
         const archivePath = await core.group('Archiving Application', async () => {
-            const archivePath = await archive(configuration)
+            const archivePath = await archive({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
+
             if (archivePath !== null) {
                 core.info(`Created application archive at ${archivePath}`);
             }
@@ -301,6 +305,10 @@ const main = async () => {
 
         if (configuration.staple === true) {
             await staple({productPath: configuration.productPath, verbose: configuration.verbose});
+        }
+
+        if (configuration.archivePath) {
+            await archive({productPath: configuration.productPath, archivePath: configuration.archivePath});
         }
     } catch (error) {
         core.setFailed(`HubOMatic failed with an unexpected error: ${error.message}`);
@@ -8870,6 +8878,14 @@ module.exports = require("os");
 
 "use strict";
 module.exports = require("path");
+
+/***/ }),
+
+/***/ 1765:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("process");
 
 /***/ }),
 
