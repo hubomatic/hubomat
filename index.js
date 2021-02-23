@@ -19,6 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// To make a new release, run: npm install && git.tagrelease
 
 const fs = require('fs');
 
@@ -42,11 +43,33 @@ const staplerExitCodes = {
     /* EX_CANTCREAT */ 73: "The ticket has been retrieved from the ticketing service and was properly validated but the ticket could not be written out to disk."
 };
 
+const getProjectInfo = async ({workspace, project}) => {
+    const options = [];
+    if (workspace != "") {
+        options.push("-workspace", workspace);
+    }
+    if (project != "") {
+        options.push("-project", project);
+    }
 
-const parseConfiguration = () => {
+    const xcodebuild = execa('xcodebuild', [...options, '-list', '-json']);
+    const {stdout} = await xcodebuild;
+
+    return JSON.parse(stdout);
+};
+
+const parseConfiguration = async () => {
     const configuration = {
+        workspace: core.getInput("workspace"),
+        project: core.getInput("project"),
+        scheme: core.getInput("scheme"),
+
+        archivePath: core.getInput("archive-path"),
         productPath: core.getInput("product-path", {required: true}),
         artifactPath: core.getInput("artifact-path", {required: false}),
+
+        exportPath: core.getInput("export-path", {required: true}),
+        exportMethod: core.getInput("export-method", {required: true}), 
 
         username: core.getInput("appstore-connect-username", {required: true}),
         password: core.getInput("appstore-connect-password", {required: true}),
@@ -62,11 +85,81 @@ const parseConfiguration = () => {
         throw Error(`Product path ${configuration.productPath} does not exist.`);
     }
 
-    return configuration
+    // If the scheme or archivePath is not provided then we discover it
+
+    if (configuration.scheme === "" || configuration.archivePath === "") {
+        const projectInfo = await getProjectInfo(configuration);
+
+        if (configuration.scheme === "") {
+            configuration.scheme = projectInfo.project.schemes[0];
+        }
+
+        if (configuration.archivePath === "") {
+            configuration.archivePath = configuration.scheme + ".xcarchive";
+        }
+    }
+
+
+    const ValidExportMethods = [
+        // "app-store",
+        // "validation",
+        // "ad-hoc",
+        // "package",
+        // "enterprise",
+        "development",
+        "developer-id",
+        // "mac-application"
+    ];
+
+    if (!ValidExportMethods.includes(configuration.exportMethod)) {
+        throw Error(`Export method ${configuration.exportMethod} is invalid.`);
+    }
+
+    if (!fs.existsSync(configuration.archivePath)) {
+        throw Error(`Archive path ${configuration.archivePath} does not exist.`);
+    }
+
+    // Parse the Info.plist in the xcarchive to make sure this is an
+    // application archive, which is the only archive we know how to
+    // handle right now.
+
+    const archiveInfo = plist.parse(fs.readFileSync(configuration.archivePath + "/Info.plist", "utf8"));
+    if (!archiveInfo.hasOwnProperty("ApplicationProperties")) {
+        throw Error(`Archive ${configuration.archivePath} is not an Application Archive`);
+    }
+
+    return configuration;
+};
+
+const exportArchive = async ({archivePath, exportMethod, exportPath}) => {
+    // Write the exportOptions.plist
+
+    const exportOptions = {
+        method: exportMethod,
+    };
+
+    // TODO This should probably be stored in some temporary directory
+    fs.writeFileSync("exportOptions.plist", plist.build(exportOptions));
+
+    // Execute xcodebuild -exportArchive
+
+    const args = [
+        "-exportArchive",
+        "-archivePath", archivePath,
+        "-exportPath", exportPath,
+        "-exportOptionsPlist", "exportOptions.plist",
+    ];
+
+    const xcodebuild = execa('xcodebuild', args);
+    xcodebuild.stdout.pipe(process.stdout);
+    xcodebuild.stderr.pipe(process.stderr);
+
+    await xcodebuild;
 };
 
 
-const archive = async ({productPath, archivePath}) => {
+
+const createZip = async ({productPath, archivePath}) => {
     const args = [
         "-c",           // Create an archive at the destination path
         "-k",           // Create a PKZip archive
@@ -254,21 +347,31 @@ const staple = async ({productPath, verbose}) => {
 
 const main = async () => {
     try {
-        const configuration = parseConfiguration();
+        const configuration = await parseConfiguration();
 
-        const archivePath = await core.group('Archiving Application', async () => {
-            const archivePath = await archive({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
+        if (archivePath == null) {
+            core.setFailed("No archivePath set");
+            return;
+        }
+
+        try {
+            await core.group('Exporting Archive', async () => {
+                await exportArchive({archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath})
+            });
+        } catch (error) {
+            core.error(`Unexpected error during Export Archive: ${error.message}`);
+            throw error;
+        }
+
+
+        const archivePath = await core.group('Preparing Application', async () => {
+            const archivePath = await createZip({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
 
             if (archivePath !== null) {
                 core.info(`Created application archive at ${archivePath}`);
             }
             return archivePath;
         });
-
-        if (archivePath == null) {
-            core.setFailed("Notarization failed");
-            return;
-        }
 
         const uuid = await core.group('Submitting for Notarizing', async () => {
             let uuid = await submit({archivePath: archivePath, ...configuration});
@@ -302,7 +405,7 @@ const main = async () => {
         }
 
         if (configuration.artifactPath) {
-            await archive({ productPath: configuration.productPath, archivePath: configuration.artifactPath });
+            await createZip({ productPath: configuration.productPath, archivePath: configuration.artifactPath });
             core.info(`Archived stapeled app to ${configuration.artifactPath}`);
         }
     } catch (error) {
@@ -312,5 +415,4 @@ const main = async () => {
 
 
 main();
-
 

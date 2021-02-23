@@ -32,6 +32,32 @@ inputs:
     required: false
     default: 120
 
+  workspace:
+    description: 'Workspace'
+    required: false
+  project:
+    description: 'Project'
+    required: false
+  scheme:
+    description: 'Scheme'
+    required: false
+  configuration:
+    description: 'Configuration'
+    required: false
+  archive-path:
+    description: 'Archive path. If not specified will default to MainScheme.xcarchive'
+    required: false
+
+  export-path:
+    description: "The export path"
+    required: false
+    default: "Export/"
+
+  export-method:
+    description: "The method to use for export"
+    required: false
+    default: "developer-id"
+
   staple:
     description: "Whether to staple the notatized product."
     required: false
