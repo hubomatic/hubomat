@@ -187,10 +187,11 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID, ver
     ];
 
     if (verbose === true) {
-        args.push("--verbose");
+        args.push("-verbose");
     }
 
     const xcodebuild = execa('xcodebuild', args);
+
     xcodebuild.stdout.pipe(process.stdout);
     xcodebuild.stderr.pipe(process.stderr);
 
