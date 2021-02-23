@@ -301,10 +301,9 @@ const main = async () => {
             core.info(`Stapeled notarization ticket to ${configuration.productPath}`);
         }
 
-        if (configuration.archivePath) {
-            await archive({productPath: configuration.productPath, archivePath: configuration.archivePath});
-            core.setOutput('archive-path', configuration.archivePath);
-            core.info(`Archived stapeled app to ${configuration.archivePath}`);
+        if (configuration.artifactPath) {
+            await archive({ productPath: configuration.productPath, archivePath: configuration.artifactPath });
+            core.info(`Archived stapeled app to ${configuration.artifactPath}`);
         }
     } catch (error) {
         core.setFailed(`HubOMatic failed with an unexpected error: ${error.message}`);
