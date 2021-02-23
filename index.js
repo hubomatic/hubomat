@@ -163,13 +163,17 @@ const createZip = async ({productPath, archivePath}) => {
 };
 
 
-const notarize = async ({productPath, archivePath, primaryBundleId, username, password, verbose}) => {
+const notarize = async ({submitPath, productPath, primaryBundleId, username, password, verbose}) => {
     //
     // Make sure the product exists.
     //
 
     if (!fs.existsSync(productPath)) {
-        throw Error(`No product could be found at ${productPath}`);
+        throw Error(`No productPath could be found at ${productPath}`);
+    }
+
+    if (!fs.existsSync(submitPath)) {
+        throw Error(`No submitPath could be found at ${submitPath}`);
     }
 
     //
@@ -202,7 +206,7 @@ const notarize = async ({productPath, archivePath, primaryBundleId, username, pa
         "altool",
         "--output-format", "json",
         "--notarize-app",
-        "-f", archivePath,
+        "-f", submitPath,
         "--primary-bundle-id", primaryBundleId,
         "-u", username,
         "-p", password
@@ -377,7 +381,7 @@ const main = async () => {
         });
 
         const uuid = await core.group('Submitting for Notarization', async () => {
-            let uuid = await notarize({archivePath: submitZipPath, ...configuration});
+            let uuid = await notarize({submitPath: submitZipPath, ...configuration});
             if (uuid !== null) {
                 core.info(`Submitted package for notarization. Request UUID is ${uuid}`);
             }
