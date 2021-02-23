@@ -394,9 +394,10 @@ const main = async () => {
         }
 
         await sleep(30 * 1000); // initial wait for the app to enter the system
+        core.info(`Checking status for archive ${configuration.archivePath}`);
 
         const success = await core.group('Waiting for Notarization Status', async () => {
-            return await pollstatus({uuid: uuid, archivePath: archivePath, ...configuration})
+            return await pollstatus({uuid: uuid, ...configuration})
         });
 
         if (success == false) {
