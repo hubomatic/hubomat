@@ -74,12 +74,12 @@ const parseConfiguration = async () => {
         archivePath: core.getInput("archive-path"),
         productPath: core.getInput("product-path", {required: true}),
         artifactPath: core.getInput("artifact-path", {required: false}),
-
         exportPath: core.getInput("export-path", {required: true}),
         exportMethod: core.getInput("export-method", {required: true}), 
 
         username: core.getInput("appstore-connect-username", {required: true}),
         password: core.getInput("appstore-connect-password", {required: true}),
+        teamID: core.getInput("team-id", {required: true}),
 
         primaryBundleId: core.getInput("primary-bundle-id"),
 
@@ -121,11 +121,12 @@ const parseConfiguration = async () => {
     return configuration;
 };
 
-const exportArchive = async ({archivePath, exportMethod, exportPath}) => {
+const exportArchive = async ({archivePath, exportMethod, exportPath, teamID}) => {
     // Write the exportOptions.plist
 
     const exportOptions = {
         method: exportMethod,
+        teamID: teamID,
     };
 
     // TODO This should probably be stored in some temporary directory
@@ -341,7 +342,7 @@ const main = async () => {
 
         try {
             await core.group('Exporting Archive', async () => {
-                await exportArchive({archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath})
+                await exportArchive({archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath, teamID: configuration.teamID})
             });
         } catch (error) {
             core.error(`Unexpected error during Export Archive: ${error.message}`);
