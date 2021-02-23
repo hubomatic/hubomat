@@ -38,6 +38,16 @@ const sleep = (ms) => {
     return new Promise(res => setTimeout(res, ms));
 };
 
+// Taken from sysexits.h and the stapler man page
+const staplerExitCodes = {
+    /* EX_USAGE     */ 64: "Options appear malformed or are missing.",
+    /* EX_NOINPUT   */ 66: "The path cannot be found, is not code-signed, or is not of a supported file format, or, if the validate option is passed, the existing ticket is missing or invalid.",
+    /* EX_DATAERR   */ 65: "The ticket data is invalid.",
+    /* EX_NOPERM    */ 77: "The ticket has been revoked by the ticketing service.",
+    /* EX_NOHOST    */ 68: "The path has not been previously notarized or the ticketing service returns an unexpected response.",
+    /* EX_CANTCREAT */ 73: "The ticket has been retrieved from the ticketing service and was properly validated but the ticket could not be written out to disk."
+};
+
 
 const parseConfiguration = () => {
     const configuration = {
@@ -47,6 +57,7 @@ const parseConfiguration = () => {
         primaryBundleId: core.getInput("primary-bundle-id"),
         timeout: core.getInput("timeout") || 60,
         verbose: core.getInput("verbose") === "true",
+        staple: (core.getInput("staple") || "true") === "true",
     };
 
     if (!fs.existsSync(configuration.productPath)) {
@@ -164,7 +175,7 @@ const submit = async ({productPath, archivePath, primaryBundleId, username, pass
 };
 
 
-const wait = async ({uuid, username, password, verbose, timeout}) => {
+const pollstatus = async ({uuid, username, password, verbose, timeout}) => {
     const args = [
         "altool",
         "--output-format", "json",
@@ -236,6 +247,15 @@ const wait = async ({uuid, username, password, verbose, timeout}) => {
     return false;
 };
 
+const staple = async ({productPath, verbose}) => {
+    const options = [verbose ? "--verbose" : "--quiet"];
+    let {exitCode} = await execa("xcrun", ["stapler", "staple", ...options, productPath], {reject: false});
+    if (exitCode != 0) {
+        const message = staplerExitCodes[exitCode] || `Unknown exit code ${exitCode}`;
+        throw Error(`Staple failed: ${message}`);
+    }
+};
+
 const main = async () => {
     try {
         const configuration = parseConfiguration();
@@ -266,10 +286,10 @@ const main = async () => {
             return;
         }
 
-        await sleep(15000); 
+        await sleep(30 * 1000); // initial wait for the app to enter the system
 
         const success = await core.group('Waiting for Notarization Status', async () => {
-            return await wait({uuid: uuid, archivePath: archivePath, ...configuration})
+            return await pollstatus({uuid: uuid, archivePath: archivePath, ...configuration})
         });
 
         if (success == false) {
@@ -278,15 +298,17 @@ const main = async () => {
         }
 
         core.setOutput('product-path', configuration.productPath);
+
+        if (configuration.staple === true) {
+            await staple({productPath: configuration.productPath, verbose: configuration.verbose});
+        }
     } catch (error) {
-        core.setFailed(`Notarization failed with an unexpected error: ${error.message}`);
+        core.setFailed(`HubOMatic failed with an unexpected error: ${error.message}`);
     }
 };
 
 
 main();
-
-
 
 
 
