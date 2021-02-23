@@ -118,19 +118,6 @@ const parseConfiguration = async () => {
         throw Error(`Export method ${configuration.exportMethod} is invalid.`);
     }
 
-    if (!fs.existsSync(configuration.archivePath)) {
-        throw Error(`Archive path ${configuration.archivePath} does not exist.`);
-    }
-
-    // Parse the Info.plist in the xcarchive to make sure this is an
-    // application archive, which is the only archive we know how to
-    // handle right now.
-
-    const archiveInfo = plist.parse(fs.readFileSync(configuration.archivePath + "/Info.plist", "utf8"));
-    if (!archiveInfo.hasOwnProperty("ApplicationProperties")) {
-        throw Error(`Archive ${configuration.archivePath} is not an Application Archive`);
-    }
-
     return configuration;
 };
 
@@ -366,13 +353,32 @@ const main = async () => {
             throw error;
         }
 
-        // the product should be exported, either manually or via the previous step
-        if (!fs.existsSync(configuration.productPath)) {
-            throw Error(`Product path ${configuration.productPath} does not exist.`);
+        try {
+            await core.group('Validating Archive', async () => {
+                // the product should be exported, either manually or via the previous step
+                if (!fs.existsSync(configuration.productPath)) {
+                    throw Error(`Product path ${configuration.productPath} does not exist.`);
+                }
+
+              if (!fs.existsSync(configuration.archivePath)) {
+                  throw Error(`Archive path ${configuration.archivePath} does not exist.`);
+              }
+
+              // Parse the Info.plist in the xcarchive to make sure this is an
+              // application archive, which is the only archive we know how to
+              // handle right now.
+              const archiveInfo = plist.parse(fs.readFileSync(configuration.archivePath + "/Info.plist", "utf8"));
+              if (!archiveInfo.hasOwnProperty("ApplicationProperties")) {
+                  throw Error(`Archive ${configuration.archivePath} is not an Application Archive`);
+              }
+
+            });
+        } catch (error) {
+            core.error(`Unexpected error during Export Archive: ${error.message}`);
+            throw error;
         }
 
-
-        const archivePath = await core.group('Preparing Application', async () => {
+        const archivePath = await core.group('Preparing for Notarization', async () => {
             const archivePath = await createZip({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
 
             if (archivePath !== null) {
@@ -381,7 +387,7 @@ const main = async () => {
             return archivePath;
         });
 
-        const uuid = await core.group('Submitting for Notarizing', async () => {
+        const uuid = await core.group('Submitting for Notarization', async () => {
             let uuid = await submit({archivePath: archivePath, ...configuration});
             if (uuid !== null) {
                 core.info(`Submitted package for notarization. Request UUID is ${uuid}`);
