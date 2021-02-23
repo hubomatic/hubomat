@@ -332,11 +332,6 @@ const main = async () => {
     try {
         const configuration = await parseConfiguration();
 
-        if (archivePath == null) {
-            core.setFailed("No archivePath set");
-            return;
-        }
-
         try {
             await core.group('Exporting Archive', async () => {
                 await exportArchive({archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath})
