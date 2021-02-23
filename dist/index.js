@@ -88,10 +88,6 @@ const parseConfiguration = async () => {
         staple: (core.getInput("staple") || "true") === "true",
     };
 
-    if (!fs.existsSync(configuration.productPath)) {
-        throw Error(`Product path ${configuration.productPath} does not exist.`);
-    }
-
     // If the scheme or archivePath is not provided then we discover it
 
     if (configuration.scheme === "" || configuration.archivePath === "") {
@@ -368,6 +364,11 @@ const main = async () => {
         } catch (error) {
             core.error(`Unexpected error during Export Archive: ${error.message}`);
             throw error;
+        }
+
+        // the product should be exported, either manually or via the previous step
+        if (!fs.existsSync(configuration.productPath)) {
+            throw Error(`Product path ${configuration.productPath} does not exist.`);
         }
 
 
