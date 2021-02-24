@@ -204,10 +204,14 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID, ver
 const verifySignature = async ({productPath, verbose}) => {
     const args = [
         "--deep",
-        "-vvv",
-        "--verify",
-        productPath,
     ];
+
+    if (verbose === true) {
+        args.push("--verbose");
+    }
+
+    args.push("--verify");
+    args.push(productPath);
 
     let xcrun = execa("/usr/bin/codesign", args, {reject: false});
 
@@ -230,8 +234,13 @@ const verifyGatekeeper = async ({productPath, verbose}) => {
         "-t",
         "exec",
         "-vv",
-        productPath,
     ];
+
+    if (verbose === true) {
+        args.push("--verbose");
+    }
+
+    args.push(productPath);
 
     let xcrun = execa("/usr/sbin/spctl", args, {reject: false});
 
