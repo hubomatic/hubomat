@@ -266,6 +266,8 @@ const notarize = async ({submitPath, productPath, primaryBundleId, username, pas
     // that we need to poll using the request UUID that is returned.
     //
 
+    core.info(`notarizing bundle ID: ${primaryBundleId}`);
+
     const args = [
         "altool",
         "--output-format", "json",
@@ -455,8 +457,9 @@ const main = async () => {
 
 
         const uuid = await core.group('Submitting for Notarization', async () => {
-            const { exportContents } = await execa('ls', ['Export/']);
-            core.info(`export folder contents: ${exportContents}`);
+            const {code, stdout, stderr} = await execa('ls', ['Export/']);
+            core.info(`export folder contents: ${stdout}`);
+            console.log(stdout);
 
             core.info(`Submitting submitZipPath ${submitZipPath}`);
 
