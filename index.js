@@ -248,8 +248,12 @@ const notarize = async ({submitPath, productPath, primaryBundleId, username, pas
         }
     }
 
-    if (primaryBundleId === null) {
-        throw Error("No primary-bundle-id set and could not determine bundle identifier from product.");
+    if (typeof primaryBundleId !== 'string') {
+        throw Error("Missing primary-bundle-id.");
+    }
+
+    if (primaryBundleId === '') {
+        throw Error("Empty primary-bundle-id.");
     }
 
     //
