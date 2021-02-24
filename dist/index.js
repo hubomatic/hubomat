@@ -248,7 +248,7 @@ const notarize = async ({submitPath, productPath, primaryBundleId, username, pas
     // use the actual bundle identifier from the Info.plist
     //
 
-    if (primaryBundleId === "") {
+    if (typeof primaryBundleId !== 'string' || primaryBundleId === "") {
         const path = productPath + "/Contents/Info.plist";
         if (fs.existsSync(path)) {
             const info = plist.parse(fs.readFileSync(path, "utf8"));
@@ -462,9 +462,10 @@ const main = async () => {
 
 
         const uuid = await core.group('Submitting for Notarization', async () => {
-            const {code, stdout, stderr} = await execa('ls', ['Export/']);
-            core.info(`export folder contents: ${stdout}`);
-            console.log(stdout);
+            {
+              const {code, stdout, stderr} = await execa('ls', ['Export/']);
+              core.info(`export folder contents: ${stdout}`);
+            }
 
             core.info(`Submitting submitZipPath: ${submitZipPath}`);
             core.info(`Submitting productPath: ${configuration.productPath}`);
