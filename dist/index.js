@@ -73,8 +73,9 @@ const parseConfiguration = async () => {
 
         archivePath: core.getInput("archive-path"),
         productPath: core.getInput("product-path", {required: true}),
-        artifactPath: core.getInput("artifact-path", {required: false}),
         exportPath: core.getInput("export-path", {required: true}),
+
+        artifactPath: core.getInput("artifact-path", {required: false}),
         exportMethod: core.getInput("export-method", {required: true}), 
 
         username: core.getInput("appstore-connect-username", {required: true}),
@@ -465,9 +466,10 @@ const main = async () => {
             core.info(`export folder contents: ${stdout}`);
             console.log(stdout);
 
-            core.info(`Submitting submitZipPath ${submitZipPath}`);
+            core.info(`Submitting submitZipPath: ${submitZipPath}`);
+            core.info(`Submitting productPath: ${configuration.productPath}`);
 
-            let uuid = await notarize({submitPath: submitZipPath, ...configuration});
+            let uuid = await notarize({submitPath: submitZipPath, productPath: configuration.productPath, ...configuration});
             if (uuid !== null) {
                 core.info(`Submitted package for notarization. Request UUID is ${uuid}`);
             }

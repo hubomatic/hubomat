@@ -47,11 +47,14 @@ inputs:
   archive-path:
     description: 'Archive path. If not specified will default to MainScheme.xcarchive'
     required: false
+    
+  product-path:
+    description: "Path to the product to notarize."
+    required: true
 
   export-path:
     description: "The export path"
     required: false
-    default: "Export/"
 
   export-method:
     description: "The method to use for export"
@@ -62,10 +65,6 @@ inputs:
     description: "Whether to staple the notatized product."
     required: false
     default: true
-    
-  product-path:
-    description: "Path to the product to notarize."
-    required: true
     
   artifact-path:
     description: "Path to the notarized and stapled distribution zip."
