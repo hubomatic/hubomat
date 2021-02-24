@@ -204,9 +204,6 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID, ver
     xcodebuild.stderr.pipe(process.stderr);
 
     await xcodebuild;
-
-    // check to ensure that the app was signed on export
-    verifySignature(productPath, verbose);
 };
 
 
@@ -454,8 +451,6 @@ const staple = async ({productPath, verbose}) => {
         throw Error(`Staple failed: ${message}`);
     }
 
-    // check to ensure that the app passes Gatekeeper muster
-    verifyGatekeeper(productPath, verbose);
 };
 
 const main = async () => {
@@ -474,6 +469,8 @@ const main = async () => {
         try {
             await core.group('Exporting Archive', async () => {
                 await exportArchive({ archivePath: configuration.archivePath, exportMethod: configuration.exportMethod, exportPath: configuration.exportPath, teamID: configuration.teamID, verbose: configuration.verbose })
+
+                await verifySignature({ productPath: configuration.productPath, verbose: configuration.verbose });
             });
         } catch (error) {
             core.error(`Unexpected error during Export Archive: ${error.message}`);
@@ -545,6 +542,9 @@ const main = async () => {
         if (configuration.staple === true) {
             await staple({productPath: configuration.productPath, verbose: configuration.verbose});
             core.info(`Stapeled notarization ticket to ${configuration.productPath}`);
+
+            await verifyGatekeeper({productPath: configuration.productPath, verbose: configuration.verbose});
+            core.info(`Verified security policy for ${configuration.productPath}`);
         }
 
         if (configuration.artifactPath) {
