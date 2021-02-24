@@ -197,9 +197,59 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID, ver
     xcodebuild.stderr.pipe(process.stderr);
 
     await xcodebuild;
+
+    // check to ensure that the app was signed on export
+    verifySignature(productPath, verbose);
 };
 
 
+
+const verifySignature = async ({productPath, verbose}) => {
+    const args = [
+        "--deep",
+        "--vvv",
+        "--verify",
+        productPath,
+    ];
+
+    let xcrun = execa("/usr/bin/codesign", args, {reject: false});
+
+    if (verbose == true) {
+        xcrun.stdout.pipe(process.stdout);
+        xcrun.stderr.pipe(process.stderr);
+    }
+
+    const {exitCode} = await xcrun;
+
+    if (exitCode != 0) {
+        throw Error(`Error checking signature: ${exitCode}`);
+    }
+
+};
+
+const verifyGatekeeper = async ({productPath, verbose}) => {
+    const args = [
+        "-a",
+        "-t",
+        "exec",
+        "-vv",
+        productPath,
+    ];
+
+    let xcrun = execa("/usr/sbin/spctl", args, {reject: false});
+
+    if (verbose == true) {
+        xcrun.stdout.pipe(process.stdout);
+        xcrun.stderr.pipe(process.stderr);
+    }
+
+    const {exitCode} = await xcrun;
+
+    if (exitCode != 0) {
+        throw Error(`Error checking security policy: ${exitCode}`);
+    }
+
+};
 
 const createZip = async ({productPath, archivePath}) => {
     const args = [
@@ -396,6 +446,9 @@ const staple = async ({productPath, verbose}) => {
         const message = staplerExitCodes[exitCode] || `Unknown exit code ${exitCode}`;
         throw Error(`Staple failed: ${message}`);
     }
+
+    // check to ensure that the app passes Gatekeeper muster
+    verifyGatekeeper(productPath, verbose);
 };
 
 const main = async () => {
