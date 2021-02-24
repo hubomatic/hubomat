@@ -248,13 +248,19 @@ const notarize = async ({submitPath, productPath, primaryBundleId, username, pas
     // use the actual bundle identifier from the Info.plist
     //
 
-    if (typeof primaryBundleId !== 'string' || primaryBundleId === "") {
+    {
+      const {code, stdout, stderr} = await execa('cat', [productPath + "/Contents/Info.plist"]);
+      core.info(`### Info.plist: ${stdout}`);
+    }
+
+    if (typeof primaryBundleId !== 'string' || primaryBundleId === '') {
         const path = productPath + "/Contents/Info.plist";
         if (fs.existsSync(path)) {
             const info = plist.parse(fs.readFileSync(path, "utf8"));
             primaryBundleId = info.CFBundleIdentifier;
         }
     }
+
 
     if (typeof primaryBundleId !== 'string') {
         throw Error("Missing primary-bundle-id.");
