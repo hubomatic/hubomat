@@ -448,8 +448,8 @@ const main = async () => {
 
 
         const uuid = await core.group('Submitting for Notarization', async () => {
-            let exportContents = await execa('ls', ['Export/']);
-            core.info(`export folder contents:w ${exportContents}`);
+            const { exportContents } = await execa('ls', ['Export/']);
+            core.info(`export folder contents: ${exportContents}`);
 
             core.info(`Submitting submitZipPath ${submitZipPath}`);
 
