@@ -204,7 +204,7 @@ const exportArchive = async ({archivePath, exportMethod, exportPath, teamID, ver
 const verifySignature = async ({productPath, verbose}) => {
     const args = [
         "--deep",
-        "--vvv",
+        "-vvv",
         "--verify",
         productPath,
     ];
