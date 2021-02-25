@@ -73,7 +73,9 @@ const parseConfiguration = async () => {
 
         archivePath: core.getInput("archive-path"),
         productPath: core.getInput("product-path", {required: true}),
+
         exportPath: core.getInput("export-path", {required: true}),
+        tmpPath: core.getInput("temp-path", {required: false}),
 
         artifactPath: core.getInput("artifact-path", {required: false}),
         exportMethod: core.getInput("export-method", {required: true}), 
@@ -124,6 +126,7 @@ const parseConfiguration = async () => {
 
 const importCertificates = async () => {
     try {
+        const tempdir = core.getInput("temp-path") || `/tmp`;
         const keychainName = core.getInput("keychain-name") || `hubomat-xcode-certificates-${process.env.GITHUB_REPOSITORY}`;
         const keychainPassword = core.getInput("keychain-password", {required: true});
         const keychainPath = path.join(process.env.HOME, "Library/Keychains", keychainName + "-db");
@@ -146,7 +149,7 @@ const importCertificates = async () => {
         if (certificatePath === "") {
             const certificateData = core.getInput('certificate-data', {required: true});
             const buffer = Buffer.from(certificateData, 'base64');
-            certificatePath = "/tmp/certificate.p12";
+            certificatePath = `${tempdir}/certificate.p12`;
             fs.writeFileSync(certificatePath, buffer);
         }
 
@@ -168,8 +171,8 @@ const importCertificates = async () => {
         core.setFailed(error.message);
         throw error;
     } finally {
-        if (fs.existsSync("/tmp/certificate.p12")) {
-            fs.unlinkSync("/tmp/certificate.p12");
+        if (fs.existsSync(`${tempdir}/certificate.p12`)) {
+            fs.unlinkSync(`${tempdir}/certificate.p12`);
         }
     }
 };
@@ -512,7 +515,8 @@ const main = async () => {
         }
 
         const submitZipPath = await core.group('Preparing for Notarization', async () => {
-            const zipPath = await createZip({productPath: configuration.productPath, archivePath: "/tmp/archive.zip"});
+            const tempdir = core.getInput("temp-path") || `/tmp`;
+            const zipPath = await createZip({productPath: configuration.productPath, archivePath: `${tmpdir}/archive.zip`});
 
             if (zipPath !== null) {
                 core.info(`Created application archive at ${zipPath}`);
@@ -558,7 +562,7 @@ const main = async () => {
 
         if (configuration.artifactPath) {
             await createZip({ productPath: configuration.productPath, archivePath: configuration.artifactPath });
-            core.info(`Archived stapeled app to ${configuration.artifactPath}`);
+            core.info(`Zipped notarized app to ${configuration.artifactPath}`);
         }
     } catch (error) {
         core.setFailed(`HubOMatic failed with an unexpected error: ${error.message}`);

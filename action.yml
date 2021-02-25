@@ -47,14 +47,19 @@ inputs:
   archive-path:
     description: 'Archive path. If not specified will default to MainScheme.xcarchive'
     required: false
+
+  export-path:
+    description: "The export path for build artifacts."
+    required: true
+
+  temp-path:
+    description: "Path to the temporary folder to use for intermediate artifacts."
+    required: false
+    default: "/tmp"
     
   product-path:
     description: "Path to the product to notarize."
     required: true
-
-  export-path:
-    description: "The export path"
-    required: false
 
   export-method:
     description: "The method to use for export"
@@ -98,7 +103,7 @@ inputs:
     description: 'The AppStore Connect username.'
     required: false
   appstore-connect-password:
-    description: 'The AppStore Connect password.'
+    description: 'The AppStore Connect application loader password (not the account password).'
     required: false
 
   appstore-connect-api-key:
