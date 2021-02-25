@@ -125,14 +125,16 @@ const parseConfiguration = async () => {
 };
 
 const importCertificates = async () => {
+    const tempdir = core.getInput("temp-path") || `/tmp`;
+
+    const keychainName = core.getInput("keychain-name") || `hubomat-xcode-certificates-${process.env.GITHUB_REPOSITORY}`;
+
+    const keychainPassword = core.getInput("keychain-password", {required: true});
+    const keychainPath = path.join(process.env.HOME, "Library/Keychains", keychainName + "-db");
+
+
     try {
-        const tempdir = core.getInput("temp-path") || `/tmp`;
-        const keychainName = core.getInput("keychain-name") || `hubomat-xcode-certificates-${process.env.GITHUB_REPOSITORY}`;
-        const keychainPassword = core.getInput("keychain-password", {required: true});
-        const keychainPath = path.join(process.env.HOME, "Library/Keychains", keychainName + "-db");
-
         // Setup the keychain if it does not exist yet
-
         if (!fs.existsSync(keychainPath)) {
             const setupCommands = [
                 ['security', ['create-keychain', '-p', keychainPassword, keychainName]],
@@ -516,7 +518,7 @@ const main = async () => {
 
         const submitZipPath = await core.group('Preparing for Notarization', async () => {
             const tempdir = core.getInput("temp-path") || `/tmp`;
-            const zipPath = await createZip({productPath: configuration.productPath, archivePath: `${tmpdir}/archive.zip`});
+            const zipPath = await createZip({productPath: configuration.productPath, archivePath: `${tempdir}/archive.zip`});
 
             if (zipPath !== null) {
                 core.info(`Created application archive at ${zipPath}`);
